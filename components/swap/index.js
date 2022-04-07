@@ -8,6 +8,7 @@ import {
   fetchBalance,
   maxAmount,
   approve,
+  swap,
 } from "../../libs/web3";
 import Select from "react-select";
 import { useWallet } from "use-wallet";
@@ -28,6 +29,7 @@ function SwapUI({ tokens }) {
   const [amountB, setAmountB] = useState(0);
 
   const [quote, setQuote] = useState({
+    returnAmount: 0,
     slippage: 0,
     distribution: [],
     distro: [],
@@ -47,6 +49,7 @@ function SwapUI({ tokens }) {
 
     // Save response
     setQuote({
+      returnAmount: response.returnAmount,
       slippage: response.slippage,
       distribution: response.distribution,
       distro: Object.assign(
@@ -90,7 +93,7 @@ function SwapUI({ tokens }) {
         const response = await approve(tokenA);
         break;
       case "swap":
-        swapTokens();
+        callSwap();
         break;
       default:
         break;
@@ -104,6 +107,10 @@ function SwapUI({ tokens }) {
     setTokenA(B);
     setTokenB(A);
     setAmountA(amount);
+  };
+
+  const callSwap = () => {
+    swap(tokenA, tokenB, amountA, quote.returnAmount, quote.distribution);
   };
 
   useEffect(() => {
@@ -179,7 +186,7 @@ function SwapUI({ tokens }) {
           </InfoContainer>
         </OutputContainers>
       </SearchGroup>
-      <ComparisonTable tokenA={tokenA} tokenB={tokenB} amountA={amountA} />
+      {/* <ComparisonTable tokenA={tokenA} tokenB={tokenB} amountA={amountA} /> */}
     </Container>
   );
 }

@@ -1,16 +1,16 @@
-import App from 'next/app'
-import { ThemeProvider, createGlobalStyle } from 'styled-components'
-import { useWallet, UseWalletProvider } from 'use-wallet'
-import Page from '../components/page'
+import App from "next/app";
+import { ThemeProvider, createGlobalStyle } from "styled-components";
+import { useWallet, UseWalletProvider } from "use-wallet";
+import Page from "../components/page";
 
 const theme = {
   colors: {
-    primary: '#363C41',
-    secondary: '#4A4A4A',
-    disabled: '#9B9B9B',
-    highlight: '#2F4960',
+    primary: "#363C41",
+    secondary: "#4A4A4A",
+    disabled: "#9B9B9B",
+    highlight: "#2F4960",
   },
-}
+};
 const Global = createGlobalStyle`
  @font-face {
     font-family: 'Lato';
@@ -45,18 +45,18 @@ const Global = createGlobalStyle`
     text-decoration: inherit; /* no underline */
   }
   
-`
+`;
 
 export default class MyApp extends App {
   render() {
-    const { Component, pageProps } = this.props
+    const { Component, pageProps } = this.props;
     return (
       <ThemeProvider theme={theme}>
         <UseWalletProvider
-          chainId={1}
-          connectors={{
-            walletconnect: { rpcUrl: 'https://bridge.walletconnect.org' },
-          }}
+          chainId={1337}
+          // connectors={{
+          //   walletconnect: { rpcUrl: "http://127.0.0.1:8545" },
+          // }}
         >
           <Page>
             <Component {...pageProps} />
@@ -64,6 +64,6 @@ export default class MyApp extends App {
           <Global />
         </UseWalletProvider>
       </ThemeProvider>
-    )
+    );
   }
 }
