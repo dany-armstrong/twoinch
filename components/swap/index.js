@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
-import styled from 'styled-components'
-import Icon from 'react-eva-icons'
+import React, { useState, useEffect } from "react";
+import styled from "styled-components";
+import Icon from "react-eva-icons";
 import {
   provider,
   fetchQuote,
@@ -8,42 +8,42 @@ import {
   fetchBalance,
   maxAmount,
   approve,
-} from '../../libs/web3'
-import Select from 'react-select'
-import { useWallet } from 'use-wallet'
-import PieChart from './piechart'
+} from "../../libs/web3";
+import Select from "react-select";
+import { useWallet } from "use-wallet";
+import PieChart from "./piechart";
 
-import PricePerToken from './pricePerToken'
-import Slippage from './slippage'
-import Advanced from './advanced'
-import ActionButton from './actionbutton'
-import ComparisonTable from './comparison'
+import PricePerToken from "./pricePerToken";
+import Slippage from "./slippage";
+import Advanced from "./advanced";
+import ActionButton from "./actionbutton";
+import ComparisonTable from "./comparison";
 
 function SwapUI({ tokens }) {
-  const { account, balance } = useWallet()
+  const { account, balance } = useWallet();
 
-  const [tokenA, setTokenA] = useState(tokens.find((i) => i.label === 'ETH'))
-  const [tokenB, setTokenB] = useState(tokens.find((i) => i.label === 'DAI'))
-  const [amountA, setAmountA] = useState((1.0).toFixed(6))
-  const [amountB, setAmountB] = useState(0)
+  const [tokenA, setTokenA] = useState(tokens.find((i) => i.label === "ETH"));
+  const [tokenB, setTokenB] = useState(tokens.find((i) => i.label === "DAI"));
+  const [amountA, setAmountA] = useState((1.0).toFixed(6));
+  const [amountB, setAmountB] = useState(0);
 
   const [quote, setQuote] = useState({
     slippage: 0,
     distribution: [],
     distro: [],
-  })
-  const [approval, setApproval] = useState(0)
-  const [tokenBalance, setTokenBalance] = useState(0)
+  });
+  const [approval, setApproval] = useState(0);
+  const [tokenBalance, setTokenBalance] = useState(0);
 
   const requestQuote = async (amount) => {
     // If we have a wallet check tkn approval & balance
     if (account) {
-      requestApproval()
-      requestBalance()
+      requestApproval();
+      requestBalance();
     }
-    if (!amountA || 0 >= amountA) return
+    if (!amountA || 0 >= amountA) return;
     // Fetch the quote
-    const response = await fetchQuote(tokenA, tokenB, amount || amountA)
+    const response = await fetchQuote(tokenA, tokenB, amount || amountA);
 
     // Save response
     setQuote({
@@ -56,69 +56,71 @@ function SwapUI({ tokens }) {
             return {
               name: splitExchanges[key],
               percent: parseFloat(item.toString()) / 10,
-            }
+            };
           })
           .filter((item) => item.percent > 0)
       ),
-    })
-    setAmountB(parseFloat(response.return).toFixed(6))
-  }
+    });
+    setAmountB(parseFloat(response.return).toFixed(6));
+  };
 
   const requestApproval = async () => {
-    if (tokenA.label === 'ETH') {
-      setApproval(maxAmount)
-      return
+    if (tokenA.label === "ETH") {
+      setApproval(maxAmount);
+      return;
     }
-    const approval = await fetchApproval(account, tokenA)
-    setApproval(approval)
-    return
-  }
+    const approval = await fetchApproval(account, tokenA);
+    setApproval(approval);
+    return;
+  };
 
   const requestBalance = async () => {
-    if (tokenA.label === 'ETH') {
-      setTokenBalance((balance / 1e18).toFixed(4))
-      return
+    if (tokenA.label === "ETH") {
+      setTokenBalance((balance / 1e18).toFixed(4));
+      return;
     }
-    const tokenBal = await fetchBalance(account, tokenA)
-    setTokenBalance(parseFloat(tokenBal).toFixed(4))
-    return
-  }
+    const tokenBal = await fetchBalance(account, tokenA);
+    setTokenBalance(parseFloat(tokenBal).toFixed(4));
+    return;
+  };
 
   const action = async (item) => {
     switch (item) {
-      case 'approve':
-        const response = await approve(tokenA)
-        break
-
+      case "approve":
+        const response = await approve(tokenA);
+        break;
+      case "swap":
+        swapTokens();
+        break;
       default:
-        break
+        break;
     }
-  }
+  };
 
   const swapTokens = () => {
-    const A = tokenA
-    const B = tokenB
-    const amount = amountB
-    setTokenA(B)
-    setTokenB(A)
-    setAmountA(amount)
-  }
+    const A = tokenA;
+    const B = tokenB;
+    const amount = amountB;
+    setTokenA(B);
+    setTokenB(A);
+    setAmountA(amount);
+  };
 
   useEffect(() => {
-    if (provider) requestQuote()
-  }, [tokenA, tokenB, amountA])
+    if (provider) requestQuote();
+  }, [tokenA, tokenB, amountA]);
 
   // Check approval when the account connects
   useEffect(() => {
-    requestApproval(account)
-  }, [account])
+    requestApproval(account);
+  }, [account]);
   // Check account balance
   useEffect(() => {
-    console.log(balance)
+    console.log(balance);
     if (balance > 0) {
-      requestBalance(account)
+      requestBalance(account);
     }
-  }, [balance])
+  }, [balance]);
   return (
     <Container>
       <SearchGroup>
@@ -179,7 +181,7 @@ function SwapUI({ tokens }) {
       </SearchGroup>
       <ComparisonTable tokenA={tokenA} tokenB={tokenB} amountA={amountA} />
     </Container>
-  )
+  );
 }
 
 const customStyles = {
@@ -187,40 +189,40 @@ const customStyles = {
     ...provided,
   }),
   valueContainer: (provided) => ({
-    padding: '6px 15px',
-    fontSize: '1.5rem',
-    fontFamily: 'Noto Sans JP',
+    padding: "6px 15px",
+    fontSize: "1.5rem",
+    fontFamily: "Noto Sans JP",
     fontWeight: 500,
   }),
   placeholder: (provided) => ({
     ...provided,
-    color: '#4a4a4a',
+    color: "#4a4a4a",
   }),
   control: (provided) => ({
     ...provided,
     // none of react-select's styles are passed to <Control />
     borderRadius: 0,
     width: 150,
-    border: '1px solid #4a4a4a',
-    borderColor: '#4a4a4a',
-    borderRight: 'none',
+    border: "1px solid #4a4a4a",
+    borderColor: "#4a4a4a",
+    borderRight: "none",
   }),
   indicatorContainer: (provided) => ({
     ...provided,
-    color: '#4a4a4a',
+    color: "#4a4a4a",
   }),
 
   indicatorSeparator: (provided) => ({}),
   singleValue: (provided, state) => {
-    return { ...provided }
+    return { ...provided };
   },
-}
+};
 
 const InfoContainer = styled.div`
   display: flex;
   flex-direction: column;
   font-size: 0.8rem;
-`
+`;
 
 const MaxAmount = styled.span`
   font-size: 0.8rem;
@@ -231,14 +233,14 @@ const MaxAmount = styled.span`
   top: -19px;
   right: -1px;
   cursor: pointer;
-`
+`;
 
 const InputButton = styled.button`
   width: 150px;
   background: none;
   padding: 10px 15px;
   font-size: 1.5rem;
-  font-family: 'Noto Sans JP';
+  font-family: "Noto Sans JP";
   font-weight: 500;
   border: 1px solid #4a4a4a;
   border-right: none;
@@ -248,12 +250,12 @@ const InputButton = styled.button`
   &:focus {
     outline: none;
   }
-`
+`;
 
 const InputAmount = styled.input`
   padding: 10px 20px;
   font-size: 1.5rem;
-  font-family: 'Noto Sans JP';
+  font-family: "Noto Sans JP";
   font-weight: 300;
   border: 1px solid #4a4a4a;
   border-radius: 0px;
@@ -261,12 +263,12 @@ const InputAmount = styled.input`
   &:focus {
     outline: none;
   }
-`
+`;
 const SwapButton = styled.div`
   margin: 1.8rem 2rem;
   width: 30px;
   height: 30px;
-`
+`;
 
 const SectionContainers = styled.section`
   display: flex;
@@ -275,7 +277,7 @@ const SectionContainers = styled.section`
   align-items: flex-start;
   justify-content: space-between;
   margin: 5px 30px;
-`
+`;
 
 const InputContainers = styled.section`
   display: flex;
@@ -283,7 +285,7 @@ const InputContainers = styled.section`
   align-items: center;
   justify-content: center;
   position: relative;
-`
+`;
 const OutputContainers = styled.section`
   display: flex;
   flex-direction: column;
@@ -297,7 +299,7 @@ const OutputContainers = styled.section`
     margin: 25px 0px;
     width: 100%;
   }
-`
+`;
 
 const SearchGroup = styled.section`
   width: 100%;
@@ -310,7 +312,7 @@ const SearchGroup = styled.section`
     height: auto;
     padding: 3rem 0rem;
   }
-`
+`;
 const Container = styled.section`
   width: 100%;
   display: flex;
@@ -321,41 +323,41 @@ const Container = styled.section`
     height: auto;
     padding: 3rem 0rem;
   }
-`
+`;
 
 let splitExchanges = [
-  'Uniswap',
-  'Kyber',
-  'Bancor',
-  'Oasis',
-  'Curve Compound',
-  'Curve USDT',
-  'Curve Y',
-  'Curve Binance',
-  'Curve Synthetix',
-  'Uniswap Compound',
-  'Uniswap CHAI',
-  'Uniswap Aave',
-  'Mooniswap',
-  'Uniswap V2',
-  'Uniswap V2 ETH',
-  'Uniswap V2 DAI',
-  'Uniswap V2 USDC',
-  'Curve Pax',
-  'Curve renBTC',
-  'Curve tBTC',
-  'Dforce XSwap',
-  'Shell',
-  'mStable mUSD',
-  'Curve sBTC',
-  'Balancer 1',
-  'Balancer 2',
-  'Balancer 3',
-  'Kyber 1',
-  'Kyber 2',
-  'Kyber 3',
-  'Kyber 4',
-]
+  "Uniswap",
+  "Kyber",
+  "Bancor",
+  "Oasis",
+  "Curve Compound",
+  "Curve USDT",
+  "Curve Y",
+  "Curve Binance",
+  "Curve Synthetix",
+  "Uniswap Compound",
+  "Uniswap CHAI",
+  "Uniswap Aave",
+  "Mooniswap",
+  "Uniswap V2",
+  "Uniswap V2 ETH",
+  "Uniswap V2 DAI",
+  "Uniswap V2 USDC",
+  "Curve Pax",
+  "Curve renBTC",
+  "Curve tBTC",
+  "Dforce XSwap",
+  "Shell",
+  "mStable mUSD",
+  "Curve sBTC",
+  "Balancer 1",
+  "Balancer 2",
+  "Balancer 3",
+  "Kyber 1",
+  "Kyber 2",
+  "Kyber 3",
+  "Kyber 4",
+];
 
 const SwapSvg = () => (
   <svg
@@ -377,7 +379,7 @@ const SwapSvg = () => (
       />
     </g>
   </svg>
-)
+);
 
 const SwapChevDown = () => (
   <svg
@@ -392,6 +394,6 @@ const SwapChevDown = () => (
       d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"
     />
   </svg>
-)
+);
 
-export default SwapUI
+export default SwapUI;
