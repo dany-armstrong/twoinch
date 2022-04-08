@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
 import styled from "styled-components";
-import Icon from "react-eva-icons";
 
 const Button = ({
   account,
@@ -18,7 +17,7 @@ const Button = ({
         onClick={() => action("approve")}
       >{`approve ${tokenA.label}`}</ActionButton>
     );
-  } else if (amountA > tokenBalance) {
+  } else if (Number(amountA) > tokenBalance) {
     return (
       <ActionButton smol disabled>
         {"insufficient funds"}

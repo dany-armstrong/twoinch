@@ -52,12 +52,7 @@ export default class MyApp extends App {
     const { Component, pageProps } = this.props;
     return (
       <ThemeProvider theme={theme}>
-        <UseWalletProvider
-          chainId={1337}
-          // connectors={{
-          //   walletconnect: { rpcUrl: "http://127.0.0.1:8545" },
-          // }}
-        >
+        <UseWalletProvider chainId={1337}>
           <Page>
             <Component {...pageProps} />
           </Page>

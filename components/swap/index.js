@@ -1,28 +1,26 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import Select from "react-select";
 import styled from "styled-components";
-import Icon from "react-eva-icons";
+import { useWallet } from "use-wallet";
 import {
-  provider,
-  fetchQuote,
+  approve,
   fetchApproval,
   fetchBalance,
+  fetchQuote,
   maxAmount,
-  approve,
+  provider,
   swap,
 } from "../../libs/web3";
-import Select from "react-select";
-import { useWallet } from "use-wallet";
+import ActionButton from "./actionbutton";
+import Advanced from "./advanced";
 import PieChart from "./piechart";
-
 import PricePerToken from "./pricePerToken";
 import Slippage from "./slippage";
-import Advanced from "./advanced";
-import ActionButton from "./actionbutton";
-import ComparisonTable from "./comparison";
 
 function SwapUI({ tokens }) {
   const { account, balance } = useWallet();
 
+  const [flags, setFlags] = useState(0);
   const [tokenA, setTokenA] = useState(tokens.find((i) => i.label === "ETH"));
   const [tokenB, setTokenB] = useState(tokens.find((i) => i.label === "DAI"));
   const [amountA, setAmountA] = useState((1.0).toFixed(6));
@@ -45,7 +43,8 @@ function SwapUI({ tokens }) {
     }
     if (!amountA || 0 >= amountA) return;
     // Fetch the quote
-    const response = await fetchQuote(tokenA, tokenB, amount || amountA);
+    const response = await fetchQuote(tokenA, tokenB, amount || amountA, flags);
+    if (response == null) return;
 
     // Save response
     setQuote({
@@ -90,7 +89,7 @@ function SwapUI({ tokens }) {
   const action = async (item) => {
     switch (item) {
       case "approve":
-        const response = await approve(tokenA);
+        await approve(tokenA);
         break;
       case "swap":
         callSwap();
@@ -110,7 +109,14 @@ function SwapUI({ tokens }) {
   };
 
   const callSwap = () => {
-    swap(tokenA, tokenB, amountA, quote.returnAmount, quote.distribution);
+    swap(
+      tokenA,
+      tokenB,
+      amountA,
+      quote.returnAmount,
+      quote.distribution,
+      flags
+    );
   };
 
   useEffect(() => {
@@ -121,13 +127,14 @@ function SwapUI({ tokens }) {
   useEffect(() => {
     requestApproval(account);
   }, [account]);
+
   // Check account balance
   useEffect(() => {
-    console.log(balance);
     if (balance > 0) {
       requestBalance(account);
     }
   }, [balance]);
+
   return (
     <Container>
       <SearchGroup>
@@ -162,7 +169,7 @@ function SwapUI({ tokens }) {
               options={tokens}
               styles={customStyles}
             />
-            <InputAmount value={amountB} />
+            <InputAmount value={amountB} readOnly />
           </InputContainers>
         </SectionContainers>
         <OutputContainers>
@@ -186,7 +193,7 @@ function SwapUI({ tokens }) {
           </InfoContainer>
         </OutputContainers>
       </SearchGroup>
-      {/* <ComparisonTable tokenA={tokenA} tokenB={tokenB} amountA={amountA} /> */}
+      <PieChart distro={quote.distro} />
     </Container>
   );
 }

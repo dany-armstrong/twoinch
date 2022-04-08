@@ -20,7 +20,7 @@ const registerProvider = (wallet) => {
   }
 };
 
-const fetchQuote = async (tokenA, tokenB, amountA) => {
+const fetchQuote = async (tokenA, tokenB, amountA, flags) => {
   // Setup Contract
   let contract = new ethers.Contract(
     data.ONE_SPLIT_ADDRESS,
@@ -29,44 +29,59 @@ const fetchQuote = async (tokenA, tokenB, amountA) => {
   );
 
   const amount = ethers.utils.parseUnits(amountA, tokenA.d);
-  const response = await contract.getExpectedReturn(
-    tokenA.value,
-    tokenB.value,
-    amount,
-    10,
-    0
-  );
-  console.log("getExpectedReturn", response);
-  const estimatedGas = await contract.estimateGas.getExpectedReturn(
-    tokenA.value,
-    tokenB.value,
-    amount,
-    10,
-    0
-  );
-  // Calculate Slippage
-  const { ethToTokenA, ethToTokenB } = await fetchSlippage(tokenA, tokenB);
-  const fullAmount = ethers.utils.formatUnits(
-    response.returnAmount.toString(),
-    tokenB.d
-  );
-  // Ratio of 1Eth's worth
-  const oneEthToB = ethToTokenA / ethToTokenB;
-  // Ratio of Full amount's worth
-  const AtoB = amountA / fullAmount;
-  const slippage = (AtoB / oneEthToB - 1) * 100;
-  return {
-    ...response,
-    return: ethers.utils.formatUnits(
+  try {
+    const response = await contract.getExpectedReturn(
+      tokenA.value,
+      tokenB.value,
+      amount,
+      10,
+      flags
+    );
+
+    //
+    // [2022/04/08 Daniel]by ganache-cli estimateGas negative value bug.
+    // https://github.com/trufflesuite/ganache/issues/984
+    //
+    // const estimatedGas = await contract.estimateGas.getExpectedReturn(
+    //   tokenA.value,
+    //   tokenB.value,
+    //   amount,
+    //   10,
+    //   0
+    // );
+    const estimatedGas = 0;
+
+    // Calculate Slippage
+    const { ethToTokenA, ethToTokenB } = await fetchSlippage(
+      tokenA,
+      tokenB,
+      flags
+    );
+    const fullAmount = ethers.utils.formatUnits(
       response.returnAmount.toString(),
       tokenB.d
-    ),
-    slippage,
-    gas: estimatedGas.toString(),
-  };
+    );
+    // Ratio of 1Eth's worth
+    const oneEthToB = ethToTokenA / ethToTokenB;
+    // Ratio of Full amount's worth
+    const AtoB = amountA / fullAmount;
+    const slippage = (AtoB / oneEthToB - 1) * 100;
+    return {
+      ...response,
+      return: ethers.utils.formatUnits(
+        response.returnAmount.toString(),
+        tokenB.d
+      ),
+      slippage,
+      gas: estimatedGas.toString(),
+    };
+  } catch (err) {
+    alert("1inch protocol smart contract reverted!");
+    return;
+  }
 };
 
-const fetchSlippage = async (tokenA, tokenB) => {
+const fetchSlippage = async (tokenA, tokenB, flags) => {
   let contract = new ethers.Contract(
     data.ONE_SPLIT_ADDRESS,
     data.ONE_SPLIT_ABI,
@@ -78,7 +93,7 @@ const fetchSlippage = async (tokenA, tokenB) => {
     tokenA.value,
     "100000000000000000",
     10,
-    0
+    flags
   );
 
   const ethToTokenB = await contract.getExpectedReturn(
@@ -86,7 +101,7 @@ const fetchSlippage = async (tokenA, tokenB) => {
     tokenB.value,
     ethToTokenA.returnAmount.toString(),
     10,
-    0
+    flags
   );
 
   return {
@@ -102,7 +117,6 @@ const fetchSlippage = async (tokenA, tokenB) => {
 };
 
 const fetchBalance = async (account, tokenA) => {
-  console.log(tokenA);
   let contract = new ethers.Contract(tokenA.value, data.ERC20_ABI, provider);
   const response = await contract.balanceOf(account);
   return ethers.utils.formatUnits(response.toString(), tokenA.d);
@@ -132,7 +146,14 @@ const approve = async (tokenA, amount) => {
   return response;
 };
 
-const swap = async (tokenA, tokenB, amountA, minReturn, distribution) => {
+const swap = async (
+  tokenA,
+  tokenB,
+  amountA,
+  minReturn,
+  distribution,
+  flags
+) => {
   const signer = provider.getSigner();
   let contract = new ethers.Contract(
     data.ONE_SPLIT_ADDRESS,
@@ -140,26 +161,18 @@ const swap = async (tokenA, tokenB, amountA, minReturn, distribution) => {
     signer
   );
   const amount = ethers.utils.parseUnits(amountA, tokenA.d);
-
-  console.log("tokenA", tokenA.value);
-  console.log("tokenB", tokenB.value);
-  console.log("amount", amount);
-  console.log("minReturn", minReturn);
-  console.log("distribution", distribution);
-
-  const response = await contract.swap(
+  await contract.swap(
     tokenA.value,
     tokenB.value,
     amount,
     minReturn,
     distribution,
-    0,
+    flags,
     {
       value: amount,
-      gasLimit: 8000000,
+      gasLimit: data.SWAP_GAS_LIMIT,
     }
   );
-  console.log("swap response", response);
 };
 
 module.exports = {
