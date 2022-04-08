@@ -2,6 +2,7 @@ import App from "next/app";
 import { ThemeProvider, createGlobalStyle } from "styled-components";
 import { useWallet, UseWalletProvider } from "use-wallet";
 import Page from "../components/page";
+import SwapContextProvider from "../libs/context/SwapContextProvider";
 
 const theme = {
   colors: {
@@ -51,14 +52,16 @@ export default class MyApp extends App {
   render() {
     const { Component, pageProps } = this.props;
     return (
-      <ThemeProvider theme={theme}>
-        <UseWalletProvider chainId={1337}>
-          <Page>
-            <Component {...pageProps} />
-          </Page>
-          <Global />
-        </UseWalletProvider>
-      </ThemeProvider>
+      <SwapContextProvider>
+        <ThemeProvider theme={theme}>
+          <UseWalletProvider chainId={1337}>
+            <Page>
+              <Component {...pageProps} />
+            </Page>
+            <Global />
+          </UseWalletProvider>
+        </ThemeProvider>
+      </SwapContextProvider>
     );
   }
 }

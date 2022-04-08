@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 import Select from "react-select";
 import styled from "styled-components";
 import { useWallet } from "use-wallet";
+import SwapContext from "../../libs/context/swap-context";
 import {
   approve,
   fetchApproval,
@@ -28,6 +31,7 @@ const FLAG_OPTIONS = [
 ];
 
 function SwapUI({ tokens }) {
+  const swapCtx = useContext(SwapContext);
   const { account, balance } = useWallet();
 
   const [flag, setFlag] = useState(FLAG_OPTIONS[0]);
@@ -53,12 +57,14 @@ function SwapUI({ tokens }) {
     }
     if (!amountA || 0 >= amountA) return;
     // Fetch the quote
+    swapCtx.setLoading(true);
     const response = await fetchQuote(
       tokenA,
       tokenB,
       amount || amountA,
       flag.value
     );
+    swapCtx.setLoading(false);
     if (response == null) return;
 
     // Save response
@@ -86,8 +92,10 @@ function SwapUI({ tokens }) {
       setApproval(maxAmount);
       return;
     }
+    swapCtx.setLoading(true);
     const approval = await fetchApproval(account, tokenA);
     setApproval(approval);
+    swapCtx.setLoading(false);
     return;
   };
 
@@ -96,8 +104,11 @@ function SwapUI({ tokens }) {
       setTokenBalance((balance / 1e18).toFixed(4));
       return;
     }
+
+    swapCtx.setLoading(true);
     const tokenBal = await fetchBalance(account, tokenA);
     setTokenBalance(parseFloat(tokenBal).toFixed(4));
+    swapCtx.setLoading(false);
     return;
   };
 
@@ -123,15 +134,19 @@ function SwapUI({ tokens }) {
     setAmountA(amount);
   };
 
-  const callSwap = () => {
-    swap(
-      tokenA,
-      tokenB,
-      amountA,
-      quote.returnAmount,
-      quote.distribution,
-      flag.value
-    );
+  const callSwap = async () => {
+    swapCtx.setLoading(true);
+    try {
+      await swap(
+        tokenA,
+        tokenB,
+        amountA,
+        quote.returnAmount,
+        quote.distribution,
+        flag.value
+      );
+    } catch (err) {}
+    swapCtx.setLoading(false);
   };
 
   useEffect(() => {
@@ -156,48 +171,61 @@ function SwapUI({ tokens }) {
         <SectionContainers>
           Flags:
           <InputContainers>
-            <Select
-              defaultValue={flag}
-              value={flag}
-              onChange={(option) => setFlag(option)}
-              options={FLAG_OPTIONS}
-              styles={customStyles}
-            />
+            {swapCtx.isLoading ? (
+              <Skeleton width={300} height={50} />
+            ) : (
+              <Select
+                defaultValue={flag}
+                value={flag}
+                onChange={(option) => setFlag(option)}
+                options={FLAG_OPTIONS}
+                styles={customStyles}
+              />
+            )}
           </InputContainers>
           <br />
           From, To:
-          <InputContainers>
-            {account ? (
-              <MaxAmount onClick={() => setAmountA(tokenBalance)}>
-                Max: {tokenBalance}
-              </MaxAmount>
-            ) : null}
-            <Select
-              defaultValue={tokenA}
-              value={tokenA}
-              onChange={(option) => setTokenA(option)}
-              options={tokens}
-              styles={customStyles}
-            />
-            <InputAmount
-              value={amountA}
-              onChange={(e) => setAmountA(e.target.value)}
-            />
-          </InputContainers>
+          {swapCtx.isLoading ? (
+            <Skeleton width={300} height={50} />
+          ) : (
+            <InputContainers>
+              {account ? (
+                <MaxAmount onClick={() => setAmountA(tokenBalance)}>
+                  Max: {tokenBalance}
+                </MaxAmount>
+              ) : null}
+              <Select
+                defaultValue={tokenA}
+                value={tokenA}
+                onChange={(option) => setTokenA(option)}
+                options={tokens}
+                styles={customStyles}
+              />
+              <InputAmount
+                value={amountA}
+                onChange={(e) => setAmountA(e.target.value)}
+              />
+            </InputContainers>
+          )}
           <SwapButton onClick={() => swapTokens()}>
             <SwapSvg />
           </SwapButton>
-          <InputContainers>
-            <Select
-              defaultValue={tokenB}
-              value={tokenB}
-              onChange={(option) => setTokenB(option)}
-              options={tokens}
-              styles={customStyles}
-            />
-            <InputAmount value={amountB} readOnly />
-          </InputContainers>
+          {swapCtx.isLoading ? (
+            <Skeleton width={300} height={50} />
+          ) : (
+            <InputContainers>
+              <Select
+                defaultValue={tokenB}
+                value={tokenB}
+                onChange={(option) => setTokenB(option)}
+                options={tokens}
+                styles={customStyles}
+              />
+              <InputAmount value={amountB} readOnly />
+            </InputContainers>
+          )}
         </SectionContainers>
+
         <OutputContainers>
           <ActionButton
             account={account}
@@ -219,7 +247,7 @@ function SwapUI({ tokens }) {
           </InfoContainer>
         </OutputContainers>
       </SearchGroup>
-      <PieChart distro={quote.distro} />
+      {swapCtx.isLoading == false && <PieChart distro={quote.distro} />}
     </Container>
   );
 }
