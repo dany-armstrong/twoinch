@@ -17,10 +17,20 @@ import PieChart from "./piechart";
 import PricePerToken from "./pricePerToken";
 import Slippage from "./slippage";
 
+const FLAG_OPTIONS = [
+  { label: "Default", value: 0x0 },
+  { label: "No UniSwap", value: 0x01 },
+  { label: "No BANCOR", value: 0x04 },
+  { label: "No OASIS", value: 0x08 },
+  { label: "No UniSwapV2", value: 0x1e000000 },
+  { label: "No UniSwapV2 USDC", value: 0x10000000 },
+  { label: "No KYBER", value: 0x200000000000000 },
+];
+
 function SwapUI({ tokens }) {
   const { account, balance } = useWallet();
 
-  const [flags, setFlags] = useState(0);
+  const [flag, setFlag] = useState(FLAG_OPTIONS[0]);
   const [tokenA, setTokenA] = useState(tokens.find((i) => i.label === "ETH"));
   const [tokenB, setTokenB] = useState(tokens.find((i) => i.label === "DAI"));
   const [amountA, setAmountA] = useState((1.0).toFixed(6));
@@ -43,7 +53,12 @@ function SwapUI({ tokens }) {
     }
     if (!amountA || 0 >= amountA) return;
     // Fetch the quote
-    const response = await fetchQuote(tokenA, tokenB, amount || amountA, flags);
+    const response = await fetchQuote(
+      tokenA,
+      tokenB,
+      amount || amountA,
+      flag.value
+    );
     if (response == null) return;
 
     // Save response
@@ -115,13 +130,13 @@ function SwapUI({ tokens }) {
       amountA,
       quote.returnAmount,
       quote.distribution,
-      flags
+      flag.value
     );
   };
 
   useEffect(() => {
     if (provider) requestQuote();
-  }, [tokenA, tokenB, amountA]);
+  }, [tokenA, tokenB, amountA, flag]);
 
   // Check approval when the account connects
   useEffect(() => {
@@ -139,6 +154,18 @@ function SwapUI({ tokens }) {
     <Container>
       <SearchGroup>
         <SectionContainers>
+          Flags:
+          <InputContainers>
+            <Select
+              defaultValue={flag}
+              value={flag}
+              onChange={(option) => setFlag(option)}
+              options={FLAG_OPTIONS}
+              styles={customStyles}
+            />
+          </InputContainers>
+          <br />
+          From, To:
           <InputContainers>
             {account ? (
               <MaxAmount onClick={() => setAmountA(tokenBalance)}>
@@ -157,7 +184,6 @@ function SwapUI({ tokens }) {
               onChange={(e) => setAmountA(e.target.value)}
             />
           </InputContainers>
-
           <SwapButton onClick={() => swapTokens()}>
             <SwapSvg />
           </SwapButton>
